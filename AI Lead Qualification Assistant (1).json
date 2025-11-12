@@ -1,0 +1,659 @@
+{
+  "name": "AI Lead Qualification Assistant",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "new-lead",
+        "options": {
+          "rawBody": false
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [-160, 48],
+      "id": "12e0e7ad-b1c4-48d9-8245-88016466651e",
+      "name": "Webhook- New Lead",
+      "webhookId": "a1f31c67-44e0-44ba-b96a-1f2fb6fb16e7"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "dfa0a3a3-6cfc-4006-bcba-a0b92ff60a8e",
+              "name": "leadName",
+              "value": "={{$json[\"body\"][\"name\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "971db590-6d56-430e-b40c-c63d71f06337",
+              "name": "leadEmail",
+              "value": "={{$json[\"body\"][\"email\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "6d6215cc-8a6a-42ca-889e-6d187369f7a8",
+              "name": "company",
+              "value": "={{$json[\"body\"][\"company\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "f855a546-4490-4932-8768-aecdba1816ce",
+              "name": "budget",
+              "value": "={{$json[\"body\"][\"budget\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "f05f7795-7137-4538-8ea7-150017e7a3df",
+              "name": "timeline",
+              "value": "={{$json[\"body\"][\"timeline\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "b6ed14da-9c85-454f-88c3-a982632b6d75",
+              "name": "projectDescription",
+              "value": "={{$json[\"body\"][\"project_description\"]}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [128, 48],
+      "id": "d8738b45-b263-43c3-9661-0825926e0b2f",
+      "name": "Normalize Leads"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are helping a digital marketing agency qualify incoming leads.\n\nRead the following lead information and:\n\n1. Classify the main service type from this exact list:\n   - SEO\n   - Paid Ads\n   - Web Design\n   - Branding\n   - Social Media Management\n   - Other\n\n2. Assign a priority from this list:\n   - High\n   - Medium\n   - Low\n\nRules for priority:\n- High = clear or decent budget, urgent or clear timeline, and specific project.\n- Medium = some interest, but budget or timeline is moderate or unclear.\n- Low = very vague, very low budget, or likely not a good fit.\n\n3. Generate a one-sentence summary of the lead.\n4. Provide a confidence score between 0 and 1 (float).\n\nReturn ONLY valid JSON in this exact structure (no extra text, no backticks, no explanation):\n\n{\n  \"serviceType\": \"SEO or Paid Ads or Web Design or Branding or Social Media Management or Other\",\n  \"priority\": \"High or Medium or Low\",\n  \"summary\": \"your one-sentence summary here\",\n  \"confidence\": 0.0\n}\n\nHere is the lead data:\n\nName: {{$json.leadName}}\nEmail: {{$json.leadEmail}}\nCompany: {{$json.company}}\nBudget: {{$json.budget}}\nTimeline: {{$json.timeline}}\nProject description: {{$json.projectDescription}}\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [464, 48],
+      "id": "810d4d20-58b7-4f83-adb0-2a8f892c5035",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [464, 224],
+      "id": "7f36002a-db7e-4a7b-89f5-2e762f3760c6",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "eByfs2vh4dnX6Ig7",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Ai Classify Leads\nModel classifies the service type, assigns a priority level, summarizes the lead, and outputs a confidence score as JSON text.",
+        "height": 528,
+        "width": 464
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [368, -160],
+      "typeVersion": 1,
+      "id": "1f617668-c1b3-49e5-b947-df4578951909",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "##   New Lead\n\nReceives new lead submissions from the agency’s website form",
+        "height": 416,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [-224, -160],
+      "typeVersion": 1,
+      "id": "ec3ca1bf-aea6-4031-abb1-2332174f69e7",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Normalize Lead Fields\nRenames the lead data into consistent field names",
+        "height": 416,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [64, -160],
+      "typeVersion": 1,
+      "id": "be0fb215-36f5-477b-9598-551935a1337b",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// This code runs once for each item\n\nlet raw = $json.output || \"\";\n\nraw = raw\n  .replace(/```json/i, \"\")\n  .replace(/```/g, \"\")\n  .trim();\n\nlet ai;\ntry {\n  ai = JSON.parse(raw);\n} catch (e) {\n  ai = {\n    serviceType: \"Other\",\n    priority: \"Low\",\n    summary: \"AI parsing failed. Needs manual review.\",\n    confidence: 0\n  };\n}\n\nconst lead = $node[\"Normalize Leads\"].json;\n\nreturn {\n  json: {\n    ...lead,\n    output: $json.output,\n    ai\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [944, 48],
+      "id": "492b1b69-f90d-4fc6-a53f-71fe74b67cce",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "content": "## Parse Ai Result\nTakes AI string and returns results with desired categories",
+        "height": 528,
+        "width": 224,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [880, -160],
+      "typeVersion": 1,
+      "id": "6b11b54f-8ae0-4f77-85b9-445715bbaa7b",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9fe1ad12-9268-47e1-840a-64e3a3037925",
+              "leftValue": "={{$json[\"ai\"][\"confidence\"]}}",
+              "rightValue": 0.75,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "fd2eb1a9-f8a4-4346-8402-494552a2844d",
+              "leftValue": "={{$json[\"ai\"][\"serviceType\"]}}",
+              "rightValue": "other",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1216, 48],
+      "id": "f9ec8063-9fc7-4ce2-9175-284de9f21715",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1dCfPyh_NddzMuhRErPTDoZA-XIwpUEXGUeEPPvdO2_Y",
+          "mode": "list",
+          "cachedResultName": "Agency Lead Qualification",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dCfPyh_NddzMuhRErPTDoZA-XIwpUEXGUeEPPvdO2_Y/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Qualified Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dCfPyh_NddzMuhRErPTDoZA-XIwpUEXGUeEPPvdO2_Y/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{$now}}",
+            "Name": "={{$json[\"leadName\"]}}",
+            "Email": "={{$json[\"leadEmail\"]}}",
+            "Company": "={{$json[\"company\"]}}",
+            "Budget": "={{$json[\"budget\"]}}",
+            "Timeline": "={{$json[\"timeline\"]}}",
+            "Project Description": "={{$json[\"projectDescription\"]}}",
+            "Service Type": "={{$json[\"ai\"][\"serviceType\"]}}",
+            "Priority": "={{$json[\"ai\"][\"priority\"]}}",
+            "AI Summary": "={{$json[\"ai\"][\"summary\"]}}",
+            "Confidence": "={{$json[\"ai\"][\"confidence\"]}}",
+            "Status": "Auto-qualified"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Budget",
+              "displayName": "Budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timeline",
+              "displayName": "Timeline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Project Description",
+              "displayName": "Project Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Service Type",
+              "displayName": "Service Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "AI Summary",
+              "displayName": "AI Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Confidence",
+              "displayName": "Confidence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [1408, -32],
+      "id": "ed07dff9-541b-4122-b142-e5d596afebb5",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "oz5Vt60mIHTJEOET",
+          "name": "Google Sheets account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1dCfPyh_NddzMuhRErPTDoZA-XIwpUEXGUeEPPvdO2_Y",
+          "mode": "list",
+          "cachedResultName": "Agency Lead Qualification",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dCfPyh_NddzMuhRErPTDoZA-XIwpUEXGUeEPPvdO2_Y/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 579077644,
+          "mode": "list",
+          "cachedResultName": "Needs Review",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dCfPyh_NddzMuhRErPTDoZA-XIwpUEXGUeEPPvdO2_Y/edit#gid=579077644"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{$now}}",
+            "Name": "={{$json[\"leadName\"]}}",
+            "Email": "={{$json[\"leadEmail\"]}}",
+            "Company": "={{$json[\"company\"]}}",
+            "Budget": "={{$json[\"budget\"]}}",
+            "Timeline": "={{$json[\"timeline\"]}}",
+            "Project Description": "={{$json[\"projectDescription\"]}}",
+            "Service Type": "={{$json[\"ai\"][\"serviceType\"]}}",
+            "Priority": "={{$json[\"ai\"][\"priority\"]}}",
+            "AI Summary": "={{$json[\"ai\"][\"summary\"]}}",
+            "Confidence": "={{$json[\"ai\"][\"confidence\"]}}",
+            "Status": "Needs Review",
+            "Reviewer Notes": "Pending"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Budget",
+              "displayName": "Budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timeline",
+              "displayName": "Timeline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Project Description",
+              "displayName": "Project Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Service Type",
+              "displayName": "Service Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "AI Summary",
+              "displayName": "AI Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Confidence",
+              "displayName": "Confidence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reviewer Notes",
+              "displayName": "Reviewer Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [1408, 128],
+      "id": "7b5f6ab0-ec1d-426a-9c4b-0909e5bf15a8",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "oz5Vt60mIHTJEOET",
+          "name": "Google Sheets account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "alerts@yourdomain.com",
+        "subject": "=New lead requires manual review – {{$json[\"Name\"] || \"Unknown name\"}}\n",
+        "message": "=<p>A new lead has been <strong>flagged for manual review</strong> by the AI lead qualifier.</p>\n\n<h3>Lead Details</h3>\n<ul>\n  <li><strong>Name:</strong> {{$json[\"Name\"]}}</li>\n  <li><strong>Email:</strong> <a href=\"mailto:{{$json[\"Email\"]}}\">{{$json[\"Email\"]}}</a></li>\n  <li><strong>Company:</strong> {{$json[\"Company\"]}}</li>\n  <li><strong>Budget:</strong> {{$json[\"Budget\"]}}</li>\n  <li><strong>Timeline:</strong> {{$json[\"Timeline\"]}}</li>\n  <li><strong>Project Description:</strong> {{$json[\"Project Description\"]}}</li>\n</ul>\n\n<h3>AI Assessment</h3>\n<ul>\n  <li><strong>Service Type (AI):</strong> {{$json[\"Service Type\"]}}</li>\n  <li><strong>Priority (AI):</strong> {{$json[\"Priority\"]}}</li>\n  <li><strong>Summary:</strong> {{$json[\"AI Summary\"]}}</li>\n  <li><strong>Confidence:</strong> {{$json[\"Confidence\"]}}</li>\n</ul>\n\n<p>This lead has been logged in the <em>\"Needs Review\"</em> tab of the \n<strong>Agency Lead Qualification</strong> sheet.<br>\nPlease review and decide next steps.</p>\n\n<hr>\n<p style=\"font-size:12px;color:#888;\">\nThis email was sent automatically with n8n.\n</p>\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1616, 128],
+      "id": "29133f6d-29bf-4e1e-9f2a-fa526b01d750",
+      "name": "Send a message",
+      "webhookId": "5214ab84-0f70-40ca-8f63-f801fb551699",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "5a6mXi4OpeddZjKV",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Confidence Check \nIf Confidence is above 0.75 then a new row is added to the Qualified Leads sheet. \n\nIf confidence is lower than 0.75, than row is added to the Needs Review sheet and an email is sent for manual review. ",
+        "height": 560,
+        "width": 656
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [1184, -192],
+      "typeVersion": 1,
+      "id": "74018ffc-c310-459d-977d-e0dc896c2461",
+      "name": "Sticky Note4"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook- New Lead": {
+      "main": [
+        [
+          {
+            "node": "Normalize Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Leads": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6c7c0950-340d-47eb-a51e-3aa7e7e989fb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "eb20bd13039bf3892e244ddd83760f610980c36610d617038332228e29e185d3"
+  },
+  "id": "4CxswNBxBcF7sseD",
+  "tags": []
+}
