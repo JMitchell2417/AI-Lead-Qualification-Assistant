@@ -26,9 +26,6 @@ It then routes leads:
 ## Business Value
 Reduces manual sorting time, improves consistency, and ensures no lead goes unnoticed.
 
-## Files
-- `ai-lead-qualification.json` — full n8n workflow export
-
 ## Author
 Created by [John Mitchell Diaz] — AI Automation Specialist + UX Designer.
 
