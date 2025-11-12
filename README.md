@@ -1,5 +1,3 @@
-# AI-Lead-Qualification-Assistant
-
 # AI Lead Qualification Workflow (n8n + Google Gemini)
 
 This project automates the process of qualifying marketing leads using **n8n** and **Google Gemini**.
